@@ -13,8 +13,7 @@ class CoreSpider(Spider):
 
     @classmethod
     def script_name(cls):
-        _script_name_: str = sys.modules[cls.__module__].__file__
-        return _script_name_.replace(".py", "").replace("\\", ".")
+        return cls.__module__
 
     @classmethod
     def settings(cls):
