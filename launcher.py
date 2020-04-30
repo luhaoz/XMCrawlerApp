@@ -5,41 +5,37 @@ import importlib.util
 import argparse
 import sys
 
+os.makedirs("script", exist_ok=True)
+
 sys.path.append(os.path.abspath('.'))
-# # parser = argparse.ArgumentParser()
-# # parser.add_argument('--script')
-# # args = parser.parse_args()
-# # script_path = args.script
-# # if script_path is None:
-# #     print("需要使用 --script 载入至少一个脚本")
-# #     sys.exit()
-# #
-# # if os.path.isfile(script_path) is False:
-# #     print("%s 不存在" % os.path.abspath(script_path))
-#
-#
-# script_path = os.path.join("script", "pixiv")
-# _import = importlib.import_module("")
+if hasattr(sys, '_MEIPASS'):
+    sys.path.append(sys._MEIPASS)
 
-_name = ".pixiv.author"
+parser = argparse.ArgumentParser()
+parser.add_argument('--script')
+args = parser.parse_args()
+script_name = args.script
+_spac = ".%s" % script_name
+try:
+    script_spec = importlib.util.find_spec(_spac, package="script")
+except ModuleNotFoundError:
+    print("脚本 :%s 不存在请检查script目录" % script_name)
+    sys.exit()
 
-_import = importlib.import_module(_name, package='script')
+if script_name is None:
+    print("需要使用 --script 指定至少一个存在于script的脚本名")
+    sys.exit()
+
+if script_spec is None:
+    print("脚本 :%s 不存在请检查script目录" % script_name)
+    sys.exit()
+
+_import = importlib.import_module(script_spec.name, package="script")
 
 if hasattr(_import, '__script__') is False:
-    pass
+    print("脚本 :%s 不存 '__script__' 指定入口" % script_name)
+    sys.exit()
 
 process = CrawlerProcess(_import.__script__.settings())
 process.crawl(_import.__script__)
 process.start()
-
-# test_spec = importlib.util.spec_from_file_location("Test",
-# loader = importlib.machinery.SourceFileLoader("script", script_path)
-# loader.exec_module()
-# # print(loader.is_package('author.py'))
-# # module = loader.load_module()
-# #
-# # print(module)
-#
-# # process = CrawlerProcess(module.Script.settings())
-# # process.crawl(module.Script)
-# # process.start()

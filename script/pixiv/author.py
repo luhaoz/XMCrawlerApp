@@ -8,9 +8,21 @@ from core.util import list_chunks, package
 from .items import AuthorItem, TaskItem, SourceItem
 import sys
 import os
+import argparse
 
 
 class Script(CoreSpider):
+
+    @classmethod
+    def arguments(cls, parser):
+        pass
+        # parser = argparse.ArgumentParser()
+        # parser.add_argument('--id')
+        # args = parser.parse_args()
+        # if args.id is None:
+        #     print("需要使用 --id 指定至少一个Pixiv 作者id")
+        #     sys.exit()
+        # print(args.id)
 
     @classmethod
     def settings(cls):
@@ -20,6 +32,13 @@ class Script(CoreSpider):
             'LOG_LEVEL': 'ERROR',
             'LOG_ENABLED': True,
             'FILES_STORE': 'space',
+            'DOWNLOADER_MIDDLEWARES': {
+                'script.pixiv.pipelines.ProxyPipeline': 350,
+                'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 400,
+                # 'app.pixiv.core.pipelines.DuplicatesPipeline': 90
+                # 'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 1,
+                # 'app.pixiv.pipelines.HttpbinProxyMiddleware': 2,
+            },
             'ITEM_PIPELINES': {
                 'script.pixiv.pipelines.TaskPipeline': 90
             },
@@ -83,7 +102,6 @@ class Script(CoreSpider):
                 urlencode(params, True)
             )
             yield Request(url=illusts_meta, callback=cls.illusts_metas, meta=response.meta)
-            break
 
         for manga_indexs in list_chunks(list(mangas), 48):
             params = {
@@ -96,7 +114,6 @@ class Script(CoreSpider):
                 urlencode(params, True)
             )
             yield Request(url=illusts_meta, callback=cls.illusts_metas, meta=response.meta)
-            break
 
     @classmethod
     def illusts_metas(cls, response: HtmlResponse):
@@ -105,16 +122,15 @@ class Script(CoreSpider):
         for illust_meta in illusts_meta.values():
             artworks = 'https://www.pixiv.net/ajax/illust/%s' % illust_meta['illustId']
             referer = 'https://www.pixiv.net/artworks/%s' % illust_meta['illustId']
-            response.meta['illust'] = illust_meta
+            cls.spider_log.info("Illust Title :%s" % illust_meta['illustTitle'])
             yield Request(url=artworks, callback=cls.illust_detail, meta=response.meta, headers={
                 'Referer': referer
             })
-            break
 
     @classmethod
     def illust_detail(cls, response: HtmlResponse):
         illust_detail = demjson.decode(response.text)
-        cls.spider_log.info("Detail: %s", illust_detail)
+
         task_item = TaskItem()
         task_item['id'] = illust_detail['body']['illustId']
         task_item['title'] = illust_detail['body']['illustTitle']
