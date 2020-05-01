@@ -46,7 +46,7 @@ class Script(CoreSpider):
 
     @classmethod
     def start_requests(cls):
-        _url = 'https://www.pixiv.net/users/471249'
+        _url = 'https://www.pixiv.net/users/10866428'
         # _url = 'https://www.pixiv.net/users/14284592'
 
         _cookies = Setting.space(cls.script_name()).parameter("cookies.json").json()
@@ -72,24 +72,17 @@ class Script(CoreSpider):
     @classmethod
     def illusts(cls, response: HtmlResponse):
         _detail = demjson.decode(response.text)
-        illusts = _detail['body']['illusts'].keys()
-        mangas = _detail['body']['manga'].keys()
+
+        illusts = []
+        mangas = []
+
+        if len(_detail['body']['illusts']) > 0:
+            illusts = _detail['body']['illusts'].keys()
+        if len(_detail['body']['manga']) > 0:
+            mangas = _detail['body']['manga'].keys()
         cls.spider_log.info("Illusts    Total :%s" % len(illusts))
         cls.spider_log.info("Mangas     Total :%s" % len(mangas))
         cls.spider_log.info("ALL        Total :%s" % (len(illusts) + len(mangas)))
-
-        # _artworks_ids = []
-        # _artworks_ids.extend(illusts)
-        # _artworks_ids.extend(mangas)
-        #
-        # for _artwork in _artworks_ids:
-        #     _url_artworks = 'https://www.pixiv.net/artworks/%s' % _artwork
-
-        #
-        # for illust_ids in illusts:
-        #     _url_artworks = 'https://www.pixiv.net/artworks/%s'
-        # for illust_ids in illusts:
-        #     _url_artworks = 'https://www.pixiv.net/artworks/%s'
 
         for illust_indexs in list_chunks(list(illusts), 48):
             params = {
