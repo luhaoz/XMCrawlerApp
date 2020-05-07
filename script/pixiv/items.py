@@ -24,6 +24,7 @@ class TaskMetaItem(CoreItem):
 
 class TaskItem(TaskMetaItem):
     source = scrapy.Field()
+    space = scrapy.Field()
 
 
 class TaskNovelItem(TaskItem):

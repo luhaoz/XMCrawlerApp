@@ -34,27 +34,29 @@ class TaskPipeline(FilesPipeline):
         item = request.meta['item']
         resource = request.meta['resource']
         resource_path = os.path.join(
-            file_space(item),
+            item['space'],
             resource.split('/')[-1]
         )
         return resource_path
 
     def item_completed(self, results, item, info: MediaPipeline.SpiderInfo):
         space = info.spider.settings.get('FILES_STORE')
-        _item_space = os.path.join(space, file_space(item))
-        _author_space = os.path.join(space, author_space(item))
-        _db = db_space(os.path.join(_author_space, '%s_main.json' % info.spider.__class__.script_name()))
-        os.makedirs(_item_space, exist_ok=True)
-        donwalod_space = os.path.join(_item_space, 'illust.json')
+
+        _root_space = os.path.dirname(item['space'])
+        _db = db_space(os.path.join(space, _root_space, '%s_main.json' % info.spider.__class__.script_name()))
+        os.makedirs(os.path.join(space, item['space']), exist_ok=True)
+        donwalod_space = os.path.join(space, item['space'], 'illust.json')
+
         _meta = TaskMetaItem(item)
         with open(donwalod_space, 'wb') as meta:
             meta.write(demjson.encode(dict(_meta), encoding="utf-8", compactly=False, indent_amount=4))
 
         if isinstance(item, TaskNovelItem):
-            content = os.path.join(_item_space, 'novel.html')
+            content = os.path.join(space, item['space'], 'novel.html')
             with open(content, 'w', encoding='utf-8') as meta:
                 meta.write(novel_html(item['title'], item['content']))
 
         if len(_db.search(Query().id == item['id'])) <= 0:
             _db.insert(demjson.decode(demjson.encode(_meta, encoding="utf-8"), encoding="utf-8"))
+
         info.spider.spider_log.info("Complate : %s-%s-%s" % (item['title'], item['id'], donwalod_space), )

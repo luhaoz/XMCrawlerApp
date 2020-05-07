@@ -14,11 +14,15 @@ def author_space(item):
     return path_format(author_path)
 
 
-def file_space(item):
+def item_space(item):
     illust_path = "%s_%s" % (item['title'], item['id'])
+    return path_format(illust_path)
+
+
+def file_space(item):
     return os.path.join(
         author_space(item),
-        path_format(illust_path),
+        item_space(item),
     )
 
 
