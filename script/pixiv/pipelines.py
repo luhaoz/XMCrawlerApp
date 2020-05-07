@@ -3,11 +3,12 @@ from scrapy.pipelines.files import FileException, FilesPipeline
 from scrapy.http.response.html import HtmlResponse
 from scrapy import Spider, Request, FormRequest
 import os
-from core.util import path_format
+from core.util import path_format, db_space
 import demjson
 from .items import AuthorItem, TaskItem, SourceItem, TaskNovelItem, TaskMetaItem
 from scrapy.pipelines.media import MediaPipeline
-from ..pixiv import novel_format, novel_bind_image, novel_html
+from ..pixiv import novel_format, novel_bind_image, novel_html, author_space, file_space
+from tinydb import Query
 
 
 class ProxyPipeline(object):
@@ -33,22 +34,16 @@ class TaskPipeline(FilesPipeline):
         item = request.meta['item']
         resource = request.meta['resource']
         resource_path = os.path.join(
-            self.file_space(item),
+            file_space(item),
             resource.split('/')[-1]
         )
         return resource_path
 
-    def file_space(self, item):
-        author_path = "%s_%s" % (item['author']['name'], item['author']['id'])
-        illust_path = "%s_%s" % (item['title'], item['id'])
-        return os.path.join(
-            path_format(author_path),
-            path_format(illust_path),
-        )
-
     def item_completed(self, results, item, info: MediaPipeline.SpiderInfo):
         space = info.spider.settings.get('FILES_STORE')
-        _item_space = os.path.join(space, self.file_space(item))
+        _item_space = os.path.join(space, file_space(item))
+        _author_space = os.path.join(space, author_space(item))
+        _db = db_space(os.path.join(_author_space, '%s_main.json' % info.spider.__class__.script_name()))
         os.makedirs(_item_space, exist_ok=True)
         donwalod_space = os.path.join(_item_space, 'illust.json')
         _meta = TaskMetaItem(item)
@@ -60,4 +55,6 @@ class TaskPipeline(FilesPipeline):
             with open(content, 'w', encoding='utf-8') as meta:
                 meta.write(novel_html(item['title'], item['content']))
 
+        if len(_db.search(Query().id == item['id'])) <= 0:
+            _db.insert(demjson.decode(demjson.encode(_meta, encoding="utf-8"), encoding="utf-8"))
         info.spider.spider_log.info("Complate : %s-%s-%s" % (item['title'], item['id'], donwalod_space), )

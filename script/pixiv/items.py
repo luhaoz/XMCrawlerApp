@@ -19,6 +19,7 @@ class TaskMetaItem(CoreItem):
     tags = scrapy.Field()
     description = scrapy.Field()
     author = scrapy.Field()
+    upload_date = scrapy.Field()
 
 
 class TaskItem(TaskMetaItem):

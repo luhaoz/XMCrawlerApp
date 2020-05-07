@@ -4,6 +4,7 @@ from core.logging import logger
 from logging import Logger
 from pydispatch import dispatcher
 from scrapy import signals
+from core.util import path_format, db_space
 
 
 class CoreSpider(Spider):

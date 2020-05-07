@@ -10,7 +10,9 @@ import sys
 import os
 import argparse
 import re
-from ..pixiv import novel_format, novel_bind_image, novel_html
+from ..pixiv import novel_format, novel_bind_image, novel_html, author_space, artworks
+from core.util import path_format, db_space
+from tinydb import Query
 
 
 class Script(CoreSpider):
@@ -33,7 +35,7 @@ class Script(CoreSpider):
             'CONCURRENT_REQUESTS': 24,
             'LOG_LEVEL': 'ERROR',
             'LOG_ENABLED': True,
-            'FILES_STORE': 'space',
+            'FILES_STORE': 'E:\\MegaSync\\pixiv\\author',
             'DOWNLOADER_MIDDLEWARES': {
                 'script.pixiv.pipelines.ProxyPipeline': 350,
                 'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 400,
@@ -48,18 +50,19 @@ class Script(CoreSpider):
 
     @classmethod
     def start_requests(cls):
-        # _url = 'https://www.pixiv.net/users/6916534'
-        _url = 'https://www.pixiv.net/users/24414324'
-        # _url = 'https://www.pixiv.net/users/14284592'
-
-        _cookies = Setting.space(cls.script_name()).parameter("cookies.json").json()
-        cls.spider_log.info("Start Url : %s" % _url)
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
-            'Accept-Language': 'zh-CN',
-        }
-        cls.spider_log.info("Use Headers : %s" % headers)
-        yield Request(url=_url, callback=cls.analysis, headers=headers, cookies=_cookies)
+        urls = [
+            # 'https://www.pixiv.net/users/471249',
+            'https://www.pixiv.net/users/6916534'
+        ]
+        for _url in urls:
+            _cookies = Setting.space(cls.script_name()).parameter("cookies.json").json()
+            cls.spider_log.info("Start Url : %s" % _url)
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
+                'Accept-Language': 'zh-CN',
+            }
+            cls.spider_log.info("Use Headers : %s" % headers)
+            yield Request(url=_url, callback=cls.analysis, headers=headers, cookies=_cookies)
 
     @classmethod
     def analysis(cls, response: HtmlResponse):
@@ -68,27 +71,47 @@ class Script(CoreSpider):
         cls.spider_log.info("Author Id : %s" % id)
         data_all = 'https://www.pixiv.net/ajax/user/%s/profile/all' % id
         cls.spider_log.info("Item Url  : %s" % data_all)
+        author_item = AuthorItem()
+        _meta_content = response.xpath('//meta[@id="meta-preload-data"]/@content').extract_first()
+        _meta = demjson.decode(_meta_content)
+        author_item['id'] = _meta['user'][id]['userId']
+        author_item['name'] = _meta['user'][id]['name']
         yield Request(url=data_all, callback=cls.illusts, meta={
-            'id': id
+            "id": id,
+            "author": author_item
         })
 
     @classmethod
     def illusts(cls, response: HtmlResponse):
         _detail = demjson.decode(response.text)
 
-        illusts = []
-        mangas = []
-        novels = []
-        if len(_detail['body']['illusts']) > 0:
-            illusts = _detail['body']['illusts'].keys()
-        if len(_detail['body']['manga']) > 0:
-            mangas = _detail['body']['manga'].keys()
-        if len(_detail['body']['novels']) > 0:
-            novels = _detail['body']['novels'].keys()
+        _cls = cls
+
+        def _filter(id):
+            _space = _cls.settings().get('FILES_STORE')
+            _author_space = author_space({
+                'author': response.meta['author']
+            })
+            _db = db_space(os.path.join(_space, _author_space, '%s_main.json' % cls.script_name()))
+            _has = len(_db.search(Query().id == id)) > 0
+            if _has is True:
+                _cls.spider_log.info("Skip Item :%s" % str(id))
+            return _has
+
+        illusts = list(artworks(_detail['body']['illusts'], _filter))
+        mangas = list(artworks(_detail['body']['manga'], _filter))
+        novels = list(artworks(_detail['body']['novels'], _filter))
+
         cls.spider_log.info("Illusts    Total :%s" % len(illusts))
         cls.spider_log.info("Mangas     Total :%s" % len(mangas))
         cls.spider_log.info("Novels     Total :%s" % len(novels))
         cls.spider_log.info("ALL        Total :%s" % (len(illusts) + len(mangas) + len(novels)))
+        #
+        # _space = cls.settings().get('FILES_STORE')
+        # _author_space = author_space({
+        #     'author': response.meta['author']
+        # })
+        # _db = db_space(os.path.join(_author_space, '%s_main.json' % cls.script_name()))
 
         for illust_indexs in list_chunks(list(illusts), 48):
             params = {
@@ -124,17 +147,15 @@ class Script(CoreSpider):
         # 67152702-1
         _novel_meta = demjson.decode(response.text)['body']
 
-        author_item = AuthorItem()
-        author_item['id'] = _novel_meta['userId']
-        author_item['name'] = _novel_meta['userName']
-        #
+        author_item = response.meta['author']
+
         task_item = TaskNovelItem()
         task_item['id'] = _novel_meta['id']
         task_item['title'] = _novel_meta['title']
         task_item['description'] = _novel_meta['description']
         task_item['author'] = author_item
         task_item['content'] = novel_format(_novel_meta['content'])
-        # novel_format, novel_bind_image
+        task_item['upload_date'] = _novel_meta['uploadDate']
         source_item = SourceItem()
         source_item['type'] = 'novel'
         source_item['url'] = response.url
@@ -142,7 +163,6 @@ class Script(CoreSpider):
             _novel_meta['coverUrl']
         ]
         task_item['source'] = source_item
-
         _search_pixiv_images = re.search(r'\[pixivimage:(.*?)\]', _novel_meta['content'], re.M | re.I)
         if _search_pixiv_images is not None:
             params = {
@@ -167,8 +187,9 @@ class Script(CoreSpider):
         task_item = response.meta['item']
         _bind_images = {}
         for id, _detail in _novel_meta.items():
-            _bind_images[id] = _detail['illust']['images']['original'].split('/')[-1]
-            task_item['source']['sources'].append(_detail['illust']['images']['original'])
+            if _detail['illust'] is not None:
+                _bind_images[id] = _detail['illust']['images']['original'].split('/')[-1]
+                task_item['source']['sources'].append(_detail['illust']['images']['original'])
         task_item['content'] = novel_bind_image(task_item['content'], _bind_images)
         yield task_item
 
@@ -192,14 +213,13 @@ class Script(CoreSpider):
         task_item['id'] = illust_detail['body']['illustId']
         task_item['title'] = illust_detail['body']['illustTitle']
         task_item['description'] = illust_detail['body']['description']
+        task_item['upload_date'] = illust_detail['body']['uploadDate']
         task_item['tags'] = [
             tag['tag']
             for tag in illust_detail['body']['tags']['tags']
         ]
 
-        author_item = AuthorItem()
-        author_item['id'] = illust_detail['body']['userId']
-        author_item['name'] = illust_detail['body']['userName']
+        author_item = response.meta['author']
 
         task_item['author'] = author_item
         source_item = SourceItem()

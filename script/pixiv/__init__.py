@@ -1,3 +1,27 @@
+from core.util import path_format, db_space
+import os
+
+
+def artworks(datas, filter=lambda id: True):
+    if isinstance(datas, dict):
+        for id, _detail in datas.items():
+            if filter(id) is False:
+                yield id
+
+
+def author_space(item):
+    author_path = "%s_%s" % (item['author']['name'], item['author']['id'])
+    return path_format(author_path)
+
+
+def file_space(item):
+    illust_path = "%s_%s" % (item['title'], item['id'])
+    return os.path.join(
+        author_space(item),
+        path_format(illust_path),
+    )
+
+
 def novel_html(title, novel):
     _html = '''
         <html>
