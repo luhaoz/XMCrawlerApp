@@ -41,9 +41,10 @@ class Script(CoreSpider):
     def start_requests(cls):
 
         _tags = [
-            '巨大ヒロイン'
+            '巨大ヒロイン',
+            'ウルトラヒロイン'
         ]
-
+        _group = '-'.join(_tags)
         _cookies = Setting.space(cls.script_name()).parameter("cookies.json").json()
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
@@ -75,6 +76,7 @@ class Script(CoreSpider):
                 cls.spider_log.info("Start Url %s: %s" % (_item_type, _item_url))
                 yield Request(url=_item_url, callback=cls.page, headers=headers, cookies=_cookies, meta={
                     "item_type": _item_type,
+                    "group": _group
                 })
 
     @classmethod
@@ -142,7 +144,7 @@ class Script(CoreSpider):
             _novel_meta['coverUrl']
         ]
         task_item['source'] = source_item
-        task_item['space'] = os.path.join(response.meta['word'], item_space(task_item))
+        task_item['space'] = os.path.join(response.meta['group'], item_space(task_item))
         _search_pixiv_images = re.search(r'\[pixivimage:(.*?)\]', _novel_meta['content'], re.M | re.I)
         if _search_pixiv_images is not None:
             params = {
@@ -193,7 +195,7 @@ class Script(CoreSpider):
         task_item['author'] = author_item
         source_item = SourceItem()
         task_item['source'] = source_item
-        task_item['space'] = os.path.join(response.meta['word'], item_space(task_item))
+        task_item['space'] = os.path.join(response.meta['group'], item_space(task_item))
         response.meta['task'] = task_item
 
         if illust_detail['body']['illustType'] == 2:
