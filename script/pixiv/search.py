@@ -107,7 +107,6 @@ class Script(CoreSpider):
                 yield Request(url=artworks, callback=cls.illust_detail, meta=response.meta, headers={
                     'Referer': referer
                 })
-                break
 
             if item_type['type'] in ['novel']:
                 _novel_url = "https://www.pixiv.net/ajax/novel/%s" % _data['id']
@@ -117,11 +116,10 @@ class Script(CoreSpider):
                 author_item['name'] = _data['userName']
                 response.meta['author'] = author_item
                 yield Request(url=_novel_url, callback=cls.novels_metas, meta=response.meta)
-                break
 
         if current_page < _pages:
             _item_url = "https://www.pixiv.net/ajax/search/%s/%s?word=%s&order=date_d&mode=all&p=%s&s_mode=s_tag_full&lang=zh" % (item_type['url'], tag, tag, current_page + 1)
-            # yield Request(url=_item_url, callback=cls.page, meta=response.meta)
+            yield Request(url=_item_url, callback=cls.page, meta=response.meta)
 
     @classmethod
     def novels_metas(cls, response: HtmlResponse):
