@@ -33,8 +33,8 @@ class Script(CoreSpider):
         return {
             'AUTOTHROTTLE_ENABLED': True,
             'CONCURRENT_REQUESTS': 24,
-            # 'LOG_LEVEL': 'ERROR',
-            # 'LOG_ENABLED': True,
+            'LOG_LEVEL': 'ERROR',
+            'LOG_ENABLED': True,
             'FILES_STORE': 'E:\\MegaSync\\pixiv\\author',
             'DOWNLOADER_MIDDLEWARES': {
                 'script.pixiv.pipelines.ProxyPipeline': 350,
@@ -51,17 +51,21 @@ class Script(CoreSpider):
     @classmethod
     def start_requests(cls):
         urls = [
-            'https://www.pixiv.net/users/12326526',
-            #
-            # 'https://www.pixiv.net/users/6916534',
-            # 'https://www.pixiv.net/users/471249',
-            # 'https://www.pixiv.net/users/24414324',
-            # 'https://www.pixiv.net/users/687125',
-            # 'https://www.pixiv.net/users/15436076',
-            # 'https://www.pixiv.net/users/14440528',
-            # 'https://www.pixiv.net/users/8969258',
-            # 'https://www.pixiv.net/users/17801188',
-            # 'https://www.pixiv.net/users/45847523',
+            'https://www.pixiv.net/users/45847523',
+            'https://www.pixiv.net/users/28617557',
+            'https://www.pixiv.net/users/6916534',
+            'https://www.pixiv.net/users/471249',
+            'https://www.pixiv.net/users/24414324',
+            'https://www.pixiv.net/users/687125',
+            'https://www.pixiv.net/users/15436076',
+            'https://www.pixiv.net/users/14440528',
+            'https://www.pixiv.net/users/8969258',
+            'https://www.pixiv.net/users/17801188',
+            'https://www.pixiv.net/users/45847523',
+            'https://www.pixiv.net/users/11022194',
+            'https://www.pixiv.net/users/18261283',
+            'https://www.pixiv.net/users/26495687',
+            'https://www.pixiv.net/users/8587823',
         ]
         _cookies = Setting.space(cls.script_name()).parameter("cookies.json").json()
         headers = {
