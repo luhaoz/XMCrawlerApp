@@ -4,7 +4,7 @@ from scrapy.http.response.html import HtmlResponse
 from urllib.parse import urlparse, parse_qs, urlencode
 import demjson
 from core.runtime import Setting
-from core.util import list_chunks, package, url_query
+from core.util import list_chunks, package, url_query, db_space
 from .items import AuthorItem, TaskItem, SourceItem, TaskNovelItem
 import sys
 import os
@@ -13,6 +13,7 @@ from urllib.request import quote
 import math
 from ..pixiv import novel_format, novel_bind_image, novel_html, author_space, artworks, item_space
 import re
+from tinydb import Query
 
 
 class Script(CoreSpider):
@@ -26,8 +27,8 @@ class Script(CoreSpider):
             # 'LOG_ENABLED': True,
             'FILES_STORE': 'space',
             'DOWNLOADER_MIDDLEWARES': {
-                'script.pixiv.pipelines.ProxyPipeline': 350,
-                'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 400,
+                # 'script.pixiv.pipelines.ProxyPipeline': 350,
+                # 'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 400,
                 # 'app.pixiv.core.pipelines.DuplicatesPipeline': 90
                 # 'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 1,
                 # 'app.pixiv.pipelines.HttpbinProxyMiddleware': 2,
@@ -42,9 +43,15 @@ class Script(CoreSpider):
 
         _tags = [
             '巨大ヒロイン',
-            'ウルトラヒロイン'
+            'ウルトラヒロイン',
+            '女奥',
+            'ウルトラマン擬人化',
+            '巨大ヒーロー',
+            'ウルトラ戦姫'
+
         ]
-        _group = '-'.join(_tags)
+
+        _group = '女奥'
         _cookies = Setting.space(cls.script_name()).parameter("cookies.json").json()
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
@@ -93,7 +100,21 @@ class Script(CoreSpider):
         # datas
         _datas = _search['data']
         response.meta['word'] = tag
+        _cls = cls
+
+        def _filter(id):
+            _space = _cls.settings().get('FILES_STORE')
+            _db = db_space(os.path.join(_space, response.meta['group'], '%s_main.json' % _cls.script_name()))
+            _has = len(_db.search(Query().id == id)) > 0
+            if _has is True:
+                _cls.spider_log.info("Skip Item :%s" % str(id))
+            return _has
+
         for _data in _datas:
+
+            if _filter(_data['id']):
+                continue
+
             if item_type['type'] in ['manga', 'illust']:
                 artworks = "https://www.pixiv.net/ajax/illust/%s" % _data['id']
                 referer = 'https://www.pixiv.net/artworks/%s' % _data['id']
