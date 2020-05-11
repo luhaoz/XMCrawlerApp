@@ -22,6 +22,10 @@ class TaskMetaItem(CoreItem):
     upload_date = scrapy.Field()
 
 
+class TaskMetaResultItem(TaskMetaItem):
+    results = scrapy.Field()
+
+
 class TaskItem(TaskMetaItem):
     source = scrapy.Field()
     space = scrapy.Field()

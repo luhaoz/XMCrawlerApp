@@ -5,10 +5,11 @@ from scrapy import Spider, Request, FormRequest
 import os
 from core.util import path_format, db_space
 import demjson
-from .items import AuthorItem, TaskItem, SourceItem, TaskNovelItem, TaskMetaItem
+from .items import AuthorItem, TaskItem, SourceItem, TaskNovelItem, TaskMetaItem, TaskMetaResultItem
 from scrapy.pipelines.media import MediaPipeline
 from ..pixiv import novel_format, novel_bind_image, novel_html, author_space, file_space
 from tinydb import Query
+from scrapy.exceptions import DropItem
 
 
 class ProxyPipeline(object):
@@ -40,6 +41,13 @@ class TaskPipeline(FilesPipeline):
         return resource_path
 
     def item_completed(self, results, item, info: MediaPipeline.SpiderInfo):
+        # print(results)
+
+        for ok, result in results:
+            if ok is False:
+                info.spider.spider_log.error("Error : %s-%s" % (result['title'], result['id']))
+                raise DropItem("Error : %s-%s" % (result['title'], result['id']))
+
         space = info.spider.settings.get('FILES_STORE')
 
         _root_space = os.path.dirname(item['space'])
@@ -47,7 +55,10 @@ class TaskPipeline(FilesPipeline):
         os.makedirs(os.path.join(space, item['space']), exist_ok=True)
         donwalod_space = os.path.join(space, item['space'], 'illust.json')
 
-        _meta = TaskMetaItem(item)
+        _meta = TaskMetaResultItem(item)
+        _meta['results'] = [
+            _result for _ok, _result in results
+        ]
         with open(donwalod_space, 'wb') as meta:
             meta.write(demjson.encode(dict(_meta), encoding="utf-8", compactly=False, indent_amount=4))
 
@@ -59,4 +70,4 @@ class TaskPipeline(FilesPipeline):
         if len(_db.search(Query().id == item['id'])) <= 0:
             _db.insert(demjson.decode(demjson.encode(_meta, encoding="utf-8"), encoding="utf-8"))
 
-        info.spider.spider_log.info("Complate : %s-%s-%s" % (item['title'], item['id'], donwalod_space), )
+        info.spider.spider_log.info("Complate : %s-%s-%s" % (item['title'], item['id'], donwalod_space))
