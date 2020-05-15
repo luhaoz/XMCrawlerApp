@@ -45,8 +45,8 @@ class TaskPipeline(FilesPipeline):
 
         for ok, result in results:
             if ok is False:
-                info.spider.spider_log.error("Error : %s-%s" % (result['title'], result['id']))
-                raise DropItem("Error : %s-%s" % (result['title'], result['id']))
+                info.spider.spider_log.error("Error : %s-%s" % (item['title'], item['id']))
+                raise DropItem("Error : %s-%s" % (item['title'], item['id']))
 
         space = info.spider.settings.get('FILES_STORE')
 

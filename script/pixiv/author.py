@@ -37,8 +37,8 @@ class Script(CoreSpider):
             'LOG_ENABLED': True,
             'FILES_STORE': 'E:\\MegaSync\\pixiv\\author',
             'DOWNLOADER_MIDDLEWARES': {
-                'script.pixiv.pipelines.ProxyPipeline': 350,
-                'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 400,
+                # 'script.pixiv.pipelines.ProxyPipeline': 350,
+                # 'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 400,
                 # 'app.pixiv.core.pipelines.DuplicatesPipeline': 90
                 # 'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 1,
                 # 'app.pixiv.pipelines.HttpbinProxyMiddleware': 2,
@@ -79,6 +79,7 @@ class Script(CoreSpider):
 
     @classmethod
     def analysis(cls, response: HtmlResponse):
+
         url = urlparse(response.url)
         id = url.path.replace('/users/', '')
         cls.spider_log.info("Author Id : %s" % id)
