@@ -21,6 +21,8 @@ class Script(CoreSpider):
     @classmethod
     def settings(cls):
         return {
+            'RETRY_ENABLED': True,
+            'RETRY_TIMES': 10,
             'AUTOTHROTTLE_ENABLED': True,
             'CONCURRENT_REQUESTS': 24,
             'LOG_LEVEL': 'ERROR',
