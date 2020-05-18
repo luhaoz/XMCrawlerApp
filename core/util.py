@@ -10,7 +10,7 @@ from tinydb.middlewares import CachingMiddleware
 
 def db_space(name) -> TinyDB:
     os.makedirs(os.path.dirname(name), exist_ok=True)
-    return TinyDB(name, ensure_ascii=False, encoding="utf-8", storage=CachingMiddleware(JSONStorage))
+    return TinyDB(name, ensure_ascii=False, encoding="utf-8")
 
 
 def list_chunks(list_data, size):
