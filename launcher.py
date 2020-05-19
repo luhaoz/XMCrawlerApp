@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--script')
 args = parser.parse_args()
 script_name = args.script
-script_name = "pixiv.author"
+# script_name = "pixiv.author"
 # script_name = "pixiv.search"
 _spac = ".%s" % script_name
 try:
