@@ -1,14 +1,16 @@
 from scrapy import Spider, Request, FormRequest
 import sys
-from core.logging import logger
+from .logging import logger
 from logging import Logger
 from pydispatch import dispatcher
 from scrapy import signals
-from core.util import path_format, db_space
+from .util import path_format, db_space
+from .database import CoreDataSpace
 
 
 class CoreSpider(Spider):
     spider_log: Logger = None
+    space: CoreDataSpace = None
     __arguments = None
 
     def __init__(self):

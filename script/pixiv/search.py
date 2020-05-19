@@ -13,7 +13,7 @@ from urllib.request import quote
 import math
 from ..pixiv import novel_format, novel_bind_image, novel_html, author_space, artworks, item_space
 import re
-from tinydb import Query
+from .databases.main import MainSpace
 
 
 class Script(CoreSpider):
@@ -54,6 +54,11 @@ class Script(CoreSpider):
         ]
 
         _group = '女奥'
+
+        _space = cls.settings().get('FILES_STORE')
+        _database = os.path.join(_space, _group, '%s_main.db' % cls.script_name())
+        cls.space: MainSpace = MainSpace.space(_database)
+
         _cookies = Setting.space(cls.script_name()).parameter("cookies.json").json()
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
@@ -105,9 +110,9 @@ class Script(CoreSpider):
         _cls = cls
 
         def _filter(id):
-            _space = _cls.settings().get('FILES_STORE')
-            _db = db_space(os.path.join(_space, response.meta['group'], '%s_main.json' % _cls.script_name()))
-            _has = len(_db.search(Query().id == id)) > 0
+            _has = _cls.space.skip_complete({
+                'id': id
+            })
             if _has is True:
                 _cls.spider_log.info("Skip Item :%s" % str(id))
             return _has
@@ -130,6 +135,7 @@ class Script(CoreSpider):
                 yield Request(url=artworks, callback=cls.illust_detail, meta=response.meta, headers={
                     'Referer': referer
                 })
+                break
 
             if item_type['type'] in ['novel']:
                 _novel_url = "https://www.pixiv.net/ajax/novel/%s" % _data['id']
@@ -139,9 +145,10 @@ class Script(CoreSpider):
                 author_item['name'] = _data['userName']
                 response.meta['author'] = author_item
                 yield Request(url=_novel_url, callback=cls.novels_metas, meta=response.meta)
-        if current_page < _pages:
-            _item_url = "https://www.pixiv.net/ajax/search/%s/%s?word=%s&order=date_d&mode=all&p=%s&s_mode=s_tag_full&lang=zh" % (item_type['url'], tag, tag, current_page + 1)
-            yield Request(url=_item_url, callback=cls.page, meta=response.meta)
+                break
+        # if current_page < _pages:
+        #     _item_url = "https://www.pixiv.net/ajax/search/%s/%s?word=%s&order=date_d&mode=all&p=%s&s_mode=s_tag_full&lang=zh" % (item_type['url'], tag, tag, current_page + 1)
+        #     yield Request(url=_item_url, callback=cls.page, meta=response.meta)
 
     @classmethod
     def novels_metas(cls, response: HtmlResponse):
@@ -156,6 +163,12 @@ class Script(CoreSpider):
         task_item['author'] = author_item
         task_item['content'] = novel_format(_novel_meta['content'])
         task_item['upload_date'] = _novel_meta['uploadDate']
+        task_item['count'] = 1
+        task_item['type'] = 'novel'
+        task_item['tags'] = [
+            tag['tag']
+            for tag in _novel_meta['tags']['tags']
+        ]
 
         source_item = SourceItem()
         source_item['type'] = 'novel'
@@ -203,6 +216,8 @@ class Script(CoreSpider):
         task_item['id'] = illust_detail['body']['illustId']
         task_item['title'] = illust_detail['body']['illustTitle']
         task_item['description'] = illust_detail['body']['description']
+        task_item['count'] = illust_detail['body']['pageCount']
+        task_item['upload_date'] = illust_detail['body']['uploadDate']
         task_item['tags'] = [
             tag['tag']
             for tag in illust_detail['body']['tags']['tags']
@@ -219,11 +234,13 @@ class Script(CoreSpider):
         response.meta['task'] = task_item
 
         if illust_detail['body']['illustType'] == 2:
+            task_item['type'] = 'ugoira'
             source_item['type'] = 'ugoira'
             source_item['url'] = 'https://www.pixiv.net/ajax/illust/%s/ugoira_meta' % illust_detail['body']['illustId']
             yield Request(url=source_item['url'], meta=response.meta, callback=cls.ugoira_source)
 
         if illust_detail['body']['illustType'] != 2:
+            task_item['type'] = 'illust'
             source_item['type'] = 'page'
             source_item['url'] = 'https://www.pixiv.net/ajax/illust/%s/pages' % illust_detail['body']['illustId']
             yield Request(url=source_item['url'], meta=response.meta, callback=cls.page_source)
