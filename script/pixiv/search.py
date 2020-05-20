@@ -57,7 +57,7 @@ class Script(CoreSpider):
 
         _space = cls.settings().get('FILES_STORE')
         _database = os.path.join(_space, _group, '%s_main.db' % cls.script_name())
-        cls.space: MainSpace = MainSpace.space(_database)
+        cls.space.set(_database, MainSpace.space(_database))
 
         _cookies = Setting.space(cls.script_name()).parameter("cookies.json").json()
         headers = {
@@ -107,9 +107,12 @@ class Script(CoreSpider):
         _datas = _search['data']
         response.meta['word'] = tag
         _cls = cls
+        _space = cls.settings().get('FILES_STORE')
 
         def _filter(id):
-            _has = _cls.space.skip_complete({
+            _database = os.path.join(_space, response.meta['group'], '%s_main.db' % cls.script_name())
+            cls.space.set(_database, MainSpace.space(_database))
+            _has = _cls.space.get(_database).skip_complete({
                 'id': id
             })
             if _has is True:

@@ -27,3 +27,15 @@ class CoreDataSpace(object):
     def init(cls):
         cls.model_base.metadata.create_all(cls._engine)
         return cls
+
+
+class DataSpaces(object):
+    _pool = dict()
+
+    @classmethod
+    def set(cls, path, space: CoreDataSpace):
+        cls._pool[path] = space
+
+    @classmethod
+    def get(cls, path):
+        return cls._pool[path]

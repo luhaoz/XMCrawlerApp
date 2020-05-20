@@ -83,21 +83,27 @@ class MainSpace(CoreDataSpace):
         _session = cls.session()
         _time = time.mktime(datetime.datetime.fromisoformat(item['upload_date']).timetuple())
 
-        _illust = Illust(
-            illust_id=item['id'],
-            name=item['title'],
-            author_id=item['author']['id'],
-            count=item['count'],
-            upload_date=_time,
-            description=item['description'],
-            type=item['type']
-        )
-        _session.add(_illust)
+        _exist_query = _session.query(Illust).filter(Illust.illust_id == item['id'])
+        if _session.query(_exist_query.exists()).scalar() is False:
+            _illust = Illust(
+                illust_id=item['id'],
+                name=item['title'],
+                author_id=item['author']['id'],
+                count=item['count'],
+                upload_date=_time,
+                description=item['description'],
+                type=item['type']
+            )
+            _session.add(_illust)
 
-        _author = Author(
-            author_id=item['author']['id'],
-            name=item['author']['name']
-        )
+        _exist_query = _session.query(Author).filter(Author.author_id == item['author']['id'])
+        if _session.query(_exist_query.exists()).scalar() is False:
+            _author = Author(
+                author_id=item['author']['id'],
+                name=item['author']['name']
+            )
+            _session.add(_author)
+
         for tag in item['tags']:
             _tag = Tag(
                 illust_id=item['id'],
@@ -121,6 +127,5 @@ class MainSpace(CoreDataSpace):
             )
             _session.add(_result_novel)
 
-        _session.add(_author)
         _session.commit()
         return True

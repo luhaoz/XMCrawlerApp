@@ -13,6 +13,7 @@ import re
 from ..pixiv import novel_format, novel_bind_image, novel_html, author_space, artworks, file_space
 from core.util import path_format, db_space
 from tinydb import Query
+from .databases.main import MainSpace
 
 
 class Script(CoreSpider):
@@ -90,6 +91,16 @@ class Script(CoreSpider):
         _meta = demjson.decode(_meta_content)
         author_item['id'] = _meta['user'][id]['userId']
         author_item['name'] = _meta['user'][id]['name']
+
+        _space = cls.settings().get('FILES_STORE')
+
+        _author_space = author_space({
+            'author': author_item
+        })
+
+        _database = os.path.join(_space, _author_space, '%s_main.db' % cls.script_name())
+        cls.space.set(_database, MainSpace.space(_database))
+
         yield Request(url=data_all, callback=cls.illusts, meta={
             "id": id,
             "author": author_item
@@ -100,14 +111,16 @@ class Script(CoreSpider):
         _detail = demjson.decode(response.text)
 
         _cls = cls
+        _space = cls.settings().get('FILES_STORE')
+        _author_space = author_space({
+            'author': response.meta['author']
+        })
 
         def _filter(id):
-            _space = _cls.settings().get('FILES_STORE')
-            _author_space = author_space({
-                'author': response.meta['author']
+            _database = os.path.join(_space, _author_space, '%s_main.db' % cls.script_name())
+            _has = _cls.space.get(_database).skip_complete({
+                'id': id
             })
-            _db = db_space(os.path.join(_space, _author_space, '%s_main.json' % cls.script_name()))
-            _has = len(_db.search(Query().id == id)) > 0
             if _has is True:
                 _cls.spider_log.info("Skip Item :%s" % str(id))
             return _has
@@ -164,6 +177,12 @@ class Script(CoreSpider):
         task_item['author'] = author_item
         task_item['content'] = novel_format(_novel_meta['content'])
         task_item['upload_date'] = _novel_meta['uploadDate']
+        task_item['count'] = 1
+        task_item['type'] = 'novel'
+        task_item['tags'] = [
+            tag['tag']
+            for tag in _novel_meta['tags']['tags']
+        ]
 
         source_item = SourceItem()
         source_item['type'] = 'novel'
@@ -224,6 +243,7 @@ class Script(CoreSpider):
         task_item['title'] = illust_detail['body']['illustTitle']
         task_item['description'] = illust_detail['body']['description']
         task_item['upload_date'] = illust_detail['body']['uploadDate']
+        task_item['count'] = illust_detail['body']['pageCount']
         task_item['tags'] = [
             tag['tag']
             for tag in illust_detail['body']['tags']['tags']
@@ -238,11 +258,13 @@ class Script(CoreSpider):
         task_item['space'] = file_space(task_item)
         response.meta['task'] = task_item
         if illust_detail['body']['illustType'] == 2:
+            task_item['type'] = 'ugoira'
             source_item['type'] = 'ugoira'
             source_item['url'] = 'https://www.pixiv.net/ajax/illust/%s/ugoira_meta' % illust_detail['body']['illustId']
             yield Request(url=source_item['url'], meta=response.meta, callback=cls.ugoira_source)
 
         if illust_detail['body']['illustType'] != 2:
+            task_item['type'] = 'illust'
             source_item['type'] = 'page'
             source_item['url'] = 'https://www.pixiv.net/ajax/illust/%s/pages' % illust_detail['body']['illustId']
             yield Request(url=source_item['url'], meta=response.meta, callback=cls.page_source)

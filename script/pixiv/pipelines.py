@@ -50,9 +50,6 @@ class TaskPipeline(FilesPipeline):
 
         space = info.spider.settings.get('FILES_STORE')
 
-        _root_space = os.path.dirname(item['space'])
-        # _db = db_space(os.path.join(space, _root_space, '%s_main.json' % info.spider.__class__.script_name()))
-
         os.makedirs(os.path.join(space, item['space']), exist_ok=True)
         donwalod_space = os.path.join(space, item['space'], 'illust.json')
 
@@ -75,5 +72,7 @@ class TaskPipeline(FilesPipeline):
             _databaseItem['content'] = item['content']
             _databaseItem['path'] = content
 
-        info.spider.space.mark_complete(_databaseItem)
+        _root_space = os.path.dirname(item['space'])
+        _database = os.path.join(space, _root_space, '%s_main.db' % info.spider.__class__.script_name())
+        info.spider.space.get(_database).mark_complete(_databaseItem)
         info.spider.spider_log.info("Complate : %s-%s-%s" % (item['title'], item['id'], donwalod_space))

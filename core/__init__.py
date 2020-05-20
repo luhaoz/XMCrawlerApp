@@ -5,12 +5,12 @@ from logging import Logger
 from pydispatch import dispatcher
 from scrapy import signals
 from .util import path_format, db_space
-from .database import CoreDataSpace
+from .database import CoreDataSpace, DataSpaces
 
 
 class CoreSpider(Spider):
     spider_log: Logger = None
-    space: CoreDataSpace = None
+    space: DataSpaces = DataSpaces
     __arguments = None
 
     def __init__(self):
