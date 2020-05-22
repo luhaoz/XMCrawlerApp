@@ -43,55 +43,64 @@ class Script(CoreSpider):
     @classmethod
     def start_requests(cls):
 
-        _tags = [
-            '巨大ヒロイン',
-            'ウルトラヒロイン',
-            '女奥',
-            'ウルトラマン擬人化',
-            '巨大ヒーロー',
-            'ウルトラ戦姫'
-
+        _groups = [
+            {
+                "group": "女奥",
+                "tags": [
+                    '巨大ヒロイン',
+                    'ウルトラヒロイン',
+                    '女奥',
+                    'ウルトラマン擬人化',
+                    '巨大ヒーロー',
+                    'ウルトラ戦姫'
+                ]
+            },
+            {
+                "group": "変身ヒロイン",
+                "tags": [
+                    'ヒロピン',
+                    '変身ヒロイン',
+                ]
+            }
         ]
 
-        _group = '女奥'
-
         _space = cls.settings().get('FILES_STORE')
-        _database = os.path.join(_space, _group, '%s_main.db' % cls.script_name())
-        cls.space.set(_database, MainSpace.space(_database))
-
         _cookies = Setting.space(cls.script_name()).parameter("cookies.json").json()
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
             'Accept-Language': 'zh-CN',
         }
-        for tag in _tags:
-            pass
+        for group in _groups:
+            _database = os.path.join(_space, group, '%s_main.db' % cls.script_name())
+            cls.space.set(_database, MainSpace.space(_database))
+            for tag in group['tags']:
+                pass
 
-            item_types = [
-                {
-                    "url": "illustrations",
-                    "type": "illust",
-                    "page_count": 60,
-                },
-                {
-                    "url": "manga",
-                    "type": "manga",
-                    "page_count": 60,
-                },
-                {
-                    "url": "novels",
-                    "type": "novel",
-                    "page_count": 24,
-                }
-            ]
+                item_types = [
+                    {
+                        "url": "illustrations",
+                        "type": "illust",
+                        "page_count": 60,
+                    },
+                    {
+                        "url": "manga",
+                        "type": "manga",
+                        "page_count": 60,
+                    },
+                    {
+                        "url": "novels",
+                        "type": "novel",
+                        "page_count": 24,
+                    }
+                ]
 
-            for _item_type in item_types:
-                _item_url = "https://www.pixiv.net/ajax/search/%s/%s?word=%s&order=date_d&mode=all&p=1&s_mode=s_tag_full&lang=zh" % (_item_type['url'], tag, tag)
-                cls.spider_log.info("Start Url %s: %s" % (_item_type, _item_url))
-                yield Request(url=_item_url, callback=cls.page, headers=headers, cookies=_cookies, meta={
-                    "item_type": _item_type,
-                    "group": _group
-                })
+                for _item_type in item_types:
+                    _item_url = "https://www.pixiv.net/ajax/search/%s/%s?word=%s&order=date_d&mode=all&p=1&s_mode=s_tag_full&lang=zh" % (_item_type['url'], tag, tag)
+                    cls.spider_log.info("Start Url %s: %s" % (_item_type, _item_url))
+                    yield Request(url=_item_url, callback=cls.page, headers=headers, cookies=_cookies, meta={
+                        "item_type": _item_type,
+                        "group": group
+                    })
 
     @classmethod
     def page(cls, response: HtmlResponse):
