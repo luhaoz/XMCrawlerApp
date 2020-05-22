@@ -52,6 +52,9 @@ class Script(CoreSpider):
     @classmethod
     def start_requests(cls):
         urls = [
+            'https://www.pixiv.net/users/5397444',
+            'https://www.pixiv.net/users/4042011',
+            'https://www.pixiv.net/users/16274829',
             'https://www.pixiv.net/users/45847523',
             'https://www.pixiv.net/users/28617557',
             'https://www.pixiv.net/users/6916534',
