@@ -71,7 +71,7 @@ class Script(CoreSpider):
             'Accept-Language': 'zh-CN',
         }
         for group in _groups:
-            _database = os.path.join(_space, group, '%s_main.db' % cls.script_name())
+            _database = os.path.join(_space, group['group'], '%s_main.db' % cls.script_name())
             cls.space.set(_database, MainSpace.space(_database))
             for tag in group['tags']:
                 pass
@@ -99,7 +99,7 @@ class Script(CoreSpider):
                     cls.spider_log.info("Start Url %s: %s" % (_item_type, _item_url))
                     yield Request(url=_item_url, callback=cls.page, headers=headers, cookies=_cookies, meta={
                         "item_type": _item_type,
-                        "group": group
+                        "group": group['group']
                     })
 
     @classmethod
