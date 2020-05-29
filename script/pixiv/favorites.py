@@ -58,10 +58,10 @@ class Script(CoreSpider):
             'group': _group
         })
 
-        # _url = "https://www.pixiv.net/novel/bookmark.php?type=all"
-        # yield Request(url=_url, callback=cls.favorites_novels, headers=headers, cookies=_cookies, meta={
-        #     'group': _group
-        # })
+        _url = "https://www.pixiv.net/novel/bookmark.php?type=all"
+        yield Request(url=_url, callback=cls.favorites_novels, headers=headers, cookies=_cookies, meta={
+            'group': _group
+        })
 
     @classmethod
     def favorites(cls, response: HtmlResponse):
