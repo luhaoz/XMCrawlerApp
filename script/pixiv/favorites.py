@@ -53,12 +53,12 @@ class Script(CoreSpider):
         _database = os.path.join(_space, _group, '%s_main.db' % cls.script_name())
         cls.space.set(_database, MainSpace.space(_database))
 
-        _url = "https://www.pixiv.net/bookmark.php?rest=show&type=illust_all&p=588"
+        _url = "https://www.pixiv.net/bookmark.php?rest=show&type=illust_all&p=1"
         yield Request(url=_url, callback=cls.favorites, headers=headers, cookies=_cookies, meta={
             'group': _group
         })
 
-        _url = "https://www.pixiv.net/novel/bookmark.php?type=all"
+        _url = "https://www.pixiv.net/novel/bookmark.php?rest=show&type=illust_all&p=1"
         yield Request(url=_url, callback=cls.favorites_novels, headers=headers, cookies=_cookies, meta={
             'group': _group
         })
