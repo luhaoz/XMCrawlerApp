@@ -36,7 +36,7 @@ class Script(CoreSpider):
             'CONCURRENT_REQUESTS': 24,
             'LOG_LEVEL': 'ERROR',
             'LOG_ENABLED': True,
-            'FILES_STORE': 'E:\\MegaSync\\pixiv\\author',
+            'FILES_STORE': 'N:\\pixiv\\space\\author',
             'DOWNLOADER_MIDDLEWARES': {
                 # 'script.pixiv.pipelines.ProxyPipeline': 350,
                 # 'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 400,
@@ -52,6 +52,10 @@ class Script(CoreSpider):
     @classmethod
     def start_requests(cls):
         urls = [
+            'https://www.pixiv.net/users/45168768',
+            'https://www.pixiv.net/users/16186617',
+            'https://www.pixiv.net/users/680161',
+            'https://www.pixiv.net/users/343981',
             'https://www.pixiv.net/users/5397444',
             'https://www.pixiv.net/users/4042011',
             'https://www.pixiv.net/users/16274829',

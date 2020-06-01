@@ -27,7 +27,7 @@ class Script(CoreSpider):
             'CONCURRENT_REQUESTS': 24,
             'LOG_LEVEL': 'ERROR',
             'LOG_ENABLED': True,
-            'FILES_STORE': 'space',
+            'FILES_STORE': 'N:\\pixiv\\space',
             'DOWNLOADER_MIDDLEWARES': {
                 # 'script.pixiv.pipelines.ProxyPipeline': 350,
                 # 'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 400,
@@ -81,7 +81,7 @@ class Script(CoreSpider):
         _space = cls.settings().get('FILES_STORE')
         _cookies = Setting.space(cls.script_name()).parameter("cookies.json").json()
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
             'Accept-Language': 'zh-CN',
         }
         for group in _groups:

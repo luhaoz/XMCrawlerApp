@@ -27,7 +27,7 @@ class Script(CoreSpider):
             'CONCURRENT_REQUESTS': 24,
             'LOG_LEVEL': 'ERROR',
             'LOG_ENABLED': True,
-            'FILES_STORE': 'space',
+            'FILES_STORE': 'N:\\pixiv\\space\\favorites',
             'DOWNLOADER_MIDDLEWARES': {
                 # 'script.pixiv.pipelines.ProxyPipeline': 350,
                 # 'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 400,
@@ -83,13 +83,16 @@ class Script(CoreSpider):
         _favorites = response.xpath('//li[@class="image-item"]')
         for _item in _favorites:
 
-            _href = _item.xpath('./a/@href').extract_first()
-            _id = _href.replace('/artworks/', '')
+          
 
             _has_user = _item.xpath('./a[@data-user_id]').extract_first()
             if _has_user is None:
                 continue
             #
+
+            _href = _item.xpath('./a/@href').extract_first()
+            _id = _href.replace('/artworks/', '')
+
             if _filter(_id) is True:
                 continue
 
@@ -102,6 +105,7 @@ class Script(CoreSpider):
         _has_next = response.xpath('//a[@rel="next"]/@href').extract_first()
         if _has_next is not None:
             _has_next_url = 'https://www.pixiv.net/bookmark.php%s' % _has_next
+            cls.spider_log.info("Next Url :%s" % _has_next_url)
             yield Request(url=_has_next_url, callback=cls.favorites, meta=response.meta)
 
     @classmethod
@@ -122,12 +126,14 @@ class Script(CoreSpider):
 
         _favorites = response.xpath('//div[@class="novel-right-contents"]//h1[@class="title"]')
         for _item in _favorites:
-            _href = _item.xpath('./a/@href').extract_first()
-            _query = url_query(_href)
+           
 
             _has_user = _item.xpath('./a[@data-user_id]').extract_first()
             if _has_user is None:
                 continue
+            
+            _href = _item.xpath('./a/@href').extract_first()
+            _query = url_query(_href)
 
             if _filter(_query['id']) is True:
                 continue
@@ -141,6 +147,7 @@ class Script(CoreSpider):
         _has_next = response.xpath('//a[@rel="next"]/@href').extract_first()
         if _has_next is not None:
             _has_next_url = 'https://www.pixiv.net/novel/bookmark.php%s' % _has_next
+            cls.spider_log.info("Next Url :%s" % _has_next_url)
             yield Request(url=_has_next_url, callback=cls.favorites, meta=response.meta)
 
     @classmethod
