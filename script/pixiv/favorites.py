@@ -126,12 +126,11 @@ class Script(CoreSpider):
 
         _favorites = response.xpath('//div[@class="novel-right-contents"]//h1[@class="title"]')
         for _item in _favorites:
-           
 
             _has_user = _item.xpath('./a[@data-user_id]').extract_first()
             if _has_user is None:
                 continue
-            
+
             _href = _item.xpath('./a/@href').extract_first()
             _query = url_query(_href)
 
