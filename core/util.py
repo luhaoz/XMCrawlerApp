@@ -29,6 +29,7 @@ def path_format(path: str):
         ('<', '['),
         ('>', ']'),
         ('|', '_'),
+        ('\t', '_'),
     ]
     for filter_ele in r_dir_filter:
         path = path.replace(filter_ele[0], filter_ele[1])
