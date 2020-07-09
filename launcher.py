@@ -5,7 +5,8 @@ import importlib.util
 import argparse
 import sys
 from core import CoreSpider
-from multiprocessing import Process
+from multiprocessing import Process, freeze_support
+from time import sleep
 
 
 def crawl_run(spider: CoreSpider):
@@ -15,6 +16,7 @@ def crawl_run(spider: CoreSpider):
 
 
 if __name__ == '__main__':
+    freeze_support()
     os.makedirs("script", exist_ok=True)
 
     sys.path.append(os.path.abspath('.'))
@@ -23,8 +25,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--script')
+    parser.add_argument('--cycle')
     args = parser.parse_args()
     script_name = args.script
+    cycle = args.cycle
     # script_name = "pixiv.author"
     # script_name = "pixiv.search"
     _spec = ".%s" % script_name
@@ -53,4 +57,8 @@ if __name__ == '__main__':
         _run_process.start()
         _run_process.join()
 
+        if cycle is not None:
+            print("准备下一次运行：%s" % cycle)
+            sleep(int(cycle))
+            continue
         break
